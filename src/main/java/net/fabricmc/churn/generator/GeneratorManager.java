@@ -34,6 +34,11 @@ public class GeneratorManager {
     // checkpoint manager instance
     private RegionCheckpointManager checkpointManager = null;
 
+    // extraction engine
+    private WorldNavigator navigator = null;
+    private ChunkExtractor extractor = null;
+    private OutputFormatter outputFormatter = null;
+
     private GeneratorManager() {
     }
 
@@ -130,16 +135,46 @@ public class GeneratorManager {
             }
         }
 
+        // Initialize world navigator and chunk extractor
+        try {
+            java.nio.file.Path worldBaseDir = null;
+            // First try to use the detected world directory from executeStart
+            String propWorldDir = System.getProperty("churn.worldDir");
+            if (propWorldDir != null) {
+                worldBaseDir = java.nio.file.Paths.get(propWorldDir);
+            } else {
+                // Fallback: look in current directory / world
+                worldBaseDir = java.nio.file.Paths.get(System.getProperty("user.dir")).resolve("world");
+            }
+            
+            // Initialize progress logger first (before extractor that uses it)
+            logger = (cfg.logPath == null) ? new ProgressLogger(chunksTotal, chunksCompleted) : new ProgressLogger(chunksTotal, chunksCompleted, cfg.logPath, cfg.logMaxBytes, cfg.logRotateCount);
+            
+            navigator = new WorldNavigator(cfg.worldId, worldBaseDir);
+            java.util.List<String> worldIssues = navigator.validateWorld();
+            if (!worldIssues.isEmpty()) {
+                System.err.println("[Churn] World validation warnings:");
+                for (String issue : worldIssues) System.err.println("  - " + issue);
+            }
+            extractor = new ChunkExtractor(navigator, logger);
+            outputFormatter = new OutputFormatter(java.nio.file.Paths.get(cfg.outputPath == null ? "churn_output" : cfg.outputPath));
+            System.out.println("[Churn] World navigator and extractor initialized (world base: " + worldBaseDir + ")");
+        } catch (Exception e) {
+            System.err.println("[Churn] failed to initialize world navigator/extractor: " + e);
+            e.printStackTrace();
+            currentJob = null;
+            return;
+        }
+
         // Create worker pool
         workerPool = Executors.newFixedThreadPool(Math.max(1, cfg.threads));
 
         // Start workers
         for (int i = 0; i < cfg.threads; i++) {
-            workerPool.submit(new Worker(workQueue, applier, chunksCompleted, this));
+            workerPool.submit(new Worker(workQueue, applier, chunksCompleted, this, extractor));
         }
 
         // Start progress logger
-        logger = (cfg.logPath == null) ? new ProgressLogger(chunksTotal, chunksCompleted) : new ProgressLogger(chunksTotal, chunksCompleted, cfg.logPath, cfg.logMaxBytes, cfg.logRotateCount);
         logger.start();
 
         // record start time

@@ -78,14 +78,42 @@ public class ChurnCommand {
     private static int executeStart(CommandContext<ServerCommandSource> ctx, String world, int radius, String options) {
         ctx.getSource().sendMessage(Text.literal("§6[Churn] §eStart parancs: világ='" + world + "', sugár=" + radius + ", opciók='" + options + "'"));
         try {
-            Properties p = parseOptions(options);
-            JobConfig cfg = JobConfig.fromProperties(p);
-            cfg.worldId = world == null || world.isEmpty() ? cfg.worldId : world;
-            cfg.radius = radius > 0 ? radius : cfg.radius;
-            if (cfg.outputPath == null) cfg.outputPath = "churn_output";
-            if (cfg.checkpointPath == null) cfg.checkpointPath = "churn_checkpoints";
-            GeneratorManager.getInstance().startJob(cfg);
-            ctx.getSource().sendMessage(Text.literal("§6[Churn] §aJob elindítva: " + cfg.toString()));
+            // Get server world directory from context
+            try {
+                java.nio.file.Path worldDir = null;
+                try {
+                    // Fabric API approach: get the server instance and resolve world directory
+                    net.minecraft.server.MinecraftServer server = ctx.getSource().getServer();
+                    if (server != null) {
+                        java.nio.file.Path serverDir = server.getRunDirectory();
+                        java.nio.file.Path potentialWorld = serverDir.resolve("world");
+                        if (java.nio.file.Files.exists(potentialWorld)) {
+                            worldDir = potentialWorld;
+                            ctx.getSource().sendMessage(Text.literal("§6[Churn] §7Detektált világkönyvtár: " + worldDir));
+                        }
+                    }
+                } catch (Exception e) {
+                    ctx.getSource().sendMessage(Text.literal("§6[Churn] §7Figyelmeztetés: Nem sikerült világkönyvtárat detektálni: " + e.getMessage()));
+                }
+
+                Properties p = parseOptions(options);
+                JobConfig cfg = JobConfig.fromProperties(p);
+                cfg.worldId = world == null || world.isEmpty() ? cfg.worldId : world;
+                cfg.radius = radius > 0 ? radius : cfg.radius;
+                if (cfg.outputPath == null) cfg.outputPath = "churn_output";
+                if (cfg.checkpointPath == null) cfg.checkpointPath = "churn_checkpoints";
+
+                // Store detected world directory in job config or environment
+                if (worldDir != null) {
+                    System.setProperty("churn.worldDir", worldDir.toString());
+                }
+
+                GeneratorManager.getInstance().startJob(cfg);
+                ctx.getSource().sendMessage(Text.literal("§6[Churn] §aJob elindítva: " + cfg.toString()));
+            } catch (Exception e) {
+                ctx.getSource().sendMessage(Text.literal("§6[Churn] §cNem sikerült opciót feldolgozni: " + e.getMessage()));
+                throw e;
+            }
         } catch (Exception e) {
             ctx.getSource().sendMessage(Text.literal("§6[Churn] §cNem sikerült elindítani a jobot: " + e.getMessage()));
         }
