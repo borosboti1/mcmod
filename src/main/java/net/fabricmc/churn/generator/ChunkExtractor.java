@@ -119,30 +119,28 @@ public class ChunkExtractor {
 
     /**
      * Parse NBT (Named Binary Tag) data and extract chunk information.
-     * Simplified: extract basic chunk metadata and block palette info.
+     * Uses full NBT parsing to extract chunk metadata, entities, and block data.
      */
     private ChunkData parseNBT(int chunkX, int chunkZ, byte[] data) throws IOException {
-        ChunkData cd = new ChunkData();
-        cd.chunkX = chunkX;
-        cd.chunkZ = chunkZ;
-        cd.timestamp = System.currentTimeMillis();
-
-        // Minimal NBT parsing: look for common tag structures
-        // In production, use proper NBT library or parse more deeply
-        String dataStr = new String(data, java.nio.charset.StandardCharsets.ISO_8859_1);
-        
-        // Extract Y-range (height) if present (usually "yMin" and "yMax" in newer versions)
-        cd.minY = -64; // 1.18+ default
-        cd.maxY = 320; // 1.18+ default
-
-        // Count blocks by scanning palette (simplified heuristic)
-        cd.blockCount = (CHUNK_SIZE * CHUNK_SIZE * (cd.maxY - cd.minY)) / 2; // rough estimate
-        cd.metadata = new HashMap<>();
-        cd.metadata.put("region_x", String.valueOf(chunkX / REGION_SIZE));
-        cd.metadata.put("region_z", String.valueOf(chunkZ / REGION_SIZE));
-        cd.metadata.put("local_x", String.valueOf(Math.floorMod(chunkX, REGION_SIZE)));
-        cd.metadata.put("local_z", String.valueOf(Math.floorMod(chunkZ, REGION_SIZE)));
-
-        return cd;
+        try {
+            NBTParser parser = new NBTParser(data);
+            Map<String, Object> nbtRoot = parser.parseRoot();
+            return NBTParser.extractChunkData(nbtRoot, chunkX, chunkZ);
+        } catch (Exception e) {
+            // If NBT parsing fails, return a stub chunk with error metadata
+            System.err.println("[Churn] NBT parsing failed for chunk " + chunkX + "," + chunkZ + ": " + e.getMessage());
+            ChunkData cd = new ChunkData();
+            cd.chunkX = chunkX;
+            cd.chunkZ = chunkZ;
+            cd.minY = -64;
+            cd.maxY = 320;
+            cd.blockCount = 0;
+            cd.timestamp = System.currentTimeMillis();
+            cd.metadata = new java.util.HashMap<>();
+            cd.metadata.put("error", e.getMessage());
+            cd.metadata.put("region_x", String.valueOf(chunkX / REGION_SIZE));
+            cd.metadata.put("region_z", String.valueOf(chunkZ / REGION_SIZE));
+            return cd;
+        }
     }
 }
