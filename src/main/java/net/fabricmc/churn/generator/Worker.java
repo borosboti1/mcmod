@@ -66,16 +66,37 @@ public class Worker implements Runnable {
     }
 
     private ChunkData extractChunkData(ChurnTask task) throws Exception {
-        // Extract chunk data using extractor (simplified stub for now)
-        ChunkData cd = new ChunkData();
-        cd.chunkX = task.chunkX;
-        cd.chunkZ = task.chunkZ;
-        cd.minY = -64;
-        cd.maxY = 320;
-        cd.blockCount = 256 * 256 * 384 / 2; // rough estimate
-        cd.timestamp = System.currentTimeMillis();
-        cd.metadata.put("extracted", "true");
-        return cd;
+        // Extract chunk data using extractor's main API
+        try {
+            // Use extractor to pull chunk data from region files
+            java.util.List<ChunkData> chunks = extractor.extractChunksInRadius(task.chunkX, task.chunkZ, 0);
+            if (chunks != null && !chunks.isEmpty()) {
+                return chunks.get(0);
+            }
+            // Fallback: return empty ChunkData if extraction fails
+            ChunkData cd = new ChunkData();
+            cd.chunkX = task.chunkX;
+            cd.chunkZ = task.chunkZ;
+            cd.minY = -64;
+            cd.maxY = 320;
+            cd.blockCount = 0;
+            cd.timestamp = System.currentTimeMillis();
+            cd.metadata.put("status", "extraction_failed");
+            return cd;
+        } catch (Exception e) {
+            System.err.println("[Churn] Warning: ChunkExtractor failed, falling back to stub: " + e.getMessage());
+            // Fallback: return a stub chunk if extraction completely fails
+            ChunkData cd = new ChunkData();
+            cd.chunkX = task.chunkX;
+            cd.chunkZ = task.chunkZ;
+            cd.minY = -64;
+            cd.maxY = 320;
+            cd.blockCount = 256 * 256 * 384 / 2; // rough estimate
+            cd.timestamp = System.currentTimeMillis();
+            cd.metadata.put("extracted", "false");
+            cd.metadata.put("error", e.getMessage());
+            return cd;
+        }
     }
 
     private byte[] serializeChunkData(ChunkData cd) {
