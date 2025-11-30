@@ -42,6 +42,18 @@ public class GeneratorManager {
             throw new IllegalStateException("A job is already running");
         }
 
+        // sanitize and validate config
+        java.util.List<String> warns = cfg.sanitize();
+        if (!warns.isEmpty()) {
+            for (String w : warns) System.out.println("[Churn] job config warning: " + w);
+        }
+        java.util.List<String> errs = cfg.validate();
+        if (!errs.isEmpty()) {
+            System.err.println("[Churn] job config validation failed:");
+            for (String e : errs) System.err.println("  - " + e);
+            return;
+        }
+
         this.currentJob = cfg;
         this.cancelRequested = false;
 

@@ -1,5 +1,5 @@
 plugins {
-    id 'fabric-loom' version '1.6.4'  // VAGY '1.5.0'
+    id 'fabric-loom' version '1.13.3'
     id 'java'
 }
 
