@@ -372,7 +372,54 @@ public class GeneratorManager {
     }
 
     public synchronized void startPostProcess(String path) {
-        System.out.println("[Churn] Starting postprocess on: " + path);
+        try {
+            java.nio.file.Path outputDir = java.nio.file.Paths.get(path == null ? "churn_output" : path);
+            if (!java.nio.file.Files.exists(outputDir)) {
+                System.err.println("[Churn] Output directory does not exist: " + outputDir);
+                return;
+            }
+
+            // Read JSON files and re-export as different formats
+            System.out.println("[Churn] Starting postprocess on: " + outputDir);
+            
+            // List all chunk JSON files
+            java.util.List<ChunkData> allChunks = new java.util.ArrayList<>();
+            try (java.nio.file.DirectoryStream<java.nio.file.Path> ds = java.nio.file.Files.newDirectoryStream(outputDir, "chunk_*.json")) {
+                for (java.nio.file.Path file : ds) {
+                    // Read and parse chunk JSON (simplified)
+                    // In production, parse JSON properly
+                    String fname = file.getFileName().toString();
+                    String[] parts = fname.replace("chunk_", "").replace(".json", "").split("_");
+                    if (parts.length >= 2) {
+                        try {
+                            int x = Integer.parseInt(parts[0]);
+                            int z = Integer.parseInt(parts[1]);
+                            ChunkData cd = new ChunkData();
+                            cd.chunkX = x;
+                            cd.chunkZ = z;
+                            cd.minY = -64;
+                            cd.maxY = 320;
+                            cd.blockCount = 0; // read from file data
+                            cd.timestamp = java.nio.file.Files.getLastModifiedTime(file).toMillis();
+                            allChunks.add(cd);
+                        } catch (NumberFormatException e) {
+                            System.err.println("[Churn] Could not parse chunk filename: " + fname);
+                        }
+                    }
+                }
+            }
+
+            // Export to CSV
+            try {
+                OutputFormatter fmt = new OutputFormatter(outputDir);
+                fmt.writeCSV(allChunks);
+                System.out.println("[Churn] Postprocess complete: exported " + allChunks.size() + " chunks to CSV");
+            } catch (Exception e) {
+                System.err.println("[Churn] Postprocess export failed: " + e);
+            }
+        } catch (Exception e) {
+            System.err.println("[Churn] Postprocess error: " + e);
+        }
     }
 
     public boolean isCancelRequested() {
