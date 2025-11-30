@@ -37,26 +37,45 @@ A Fabric mod for extracting, analyzing, and exporting Minecraft world chunk data
 2. Place in your Fabric mods directory
 3. Requires Minecraft 1.21 with Fabric Loader 0.16.10+
 
-### Basic Usage
+### Basic Usage (New Command Structure - v1.1+)
 
 ```bash
-# Extract all chunks within 10-chunk radius
-/churn start myworld 10
+# Configure settings
+/churn world overworld
+/churn radius 50
+/churn threads 8
 
-# Check extraction progress
+# Check settings
+/churn settings
+
+# Start extraction
+/churn start
+
+# Check progress
 /churn status
 
-# Pause for later resumption
+# Pause if needed
 /churn pause
 
-# Resume from checkpoint
-/churn resume ./churn_checkpoints/churn_last_job.meta
+# Resume later
+/churn resume
 
 # Process results to CSV
 /churn postprocess ./churn_output
 ```
 
-For detailed usage instructions, see [USAGE_GUIDE.md](USAGE_GUIDE.md).
+### Legacy Usage (Still Supported)
+
+```bash
+# Direct start with parameters
+/churn start myworld 10
+
+# Show help
+/churn help
+```
+
+For detailed command reference, see [COMMAND_REFERENCE.md](COMMAND_REFERENCE.md).
+For usage examples, see [USAGE_GUIDE.md](USAGE_GUIDE.md).
 
 ## Architecture
 
