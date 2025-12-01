@@ -2,32 +2,36 @@ package net.fabricmc.churn;
 
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import net.fabricmc.churn.ui.ConsoleLogger;
+import net.fabricmc.churn.ui.ProgressConfig;
 
 public class ChurnMod implements ModInitializer {
     public static final String MOD_ID = "churn";
-    public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
     
     @Override
     public void onInitialize() {
-        LOGGER.info("=== CHURN MOD INICIALIZÁLÁS ===");
-        LOGGER.info("1. Mod main class betöltve");
+        // Initialize with new logging system
+        ConsoleLogger.init("Churn Mod v0.2.1 initializing");
         
+        // Load configuration
+        try {
+            ProgressConfig.getInstance().loadFromFile("churn.properties");
+            ConsoleLogger.init("[CONFIG] Progress settings loaded");
+        } catch (Exception e) {
+            ConsoleLogger.warn("Failed to load configuration: %s", e.getMessage());
+        }
+        
+        // Register commands
         CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> {
-            LOGGER.info("2. CommandRegistrationCallback meghívva");
-            LOGGER.info("3. Environment: " + environment.toString());
-            LOGGER.info("4. Dispatcher: " + dispatcher.toString());
-            
             try {
+                ConsoleLogger.init("[CMD] Registering Churn commands...");
                 net.fabricmc.churn.command.ChurnCommand.register(dispatcher);
-                LOGGER.info("5. ChurnCommand.register() sikeres");
+                ConsoleLogger.init("[CMD] Commands registered successfully");
             } catch (Exception e) {
-                LOGGER.error("6. Hiba a parancs regisztrációban: " + e.getMessage());
-                e.printStackTrace();
+                ConsoleLogger.error("Failed to register commands: %s", e);
             }
         });
         
-        LOGGER.info("=== CHURN MOD INICIALIZÁLÁS BEFEJEZVE ===");
+        ConsoleLogger.init("[INIT] Churn Mod initialization complete");
     }
 }

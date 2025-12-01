@@ -1,4 +1,4 @@
-# **Churn Mod v1.2 - Implementation Guide**
+# **Churn Mod v0.2.1 - Implementation Guide**
 
 ## **New Components Added**
 
@@ -252,7 +252,7 @@ ConsoleLogger.setLogLevel(config.logLevel);
 
 ## **12. Migration Guide**
 
-### **From v1.1 to v1.2**
+### **From v1.1 to v0.2.1**
 
 **What Changed:**
 - New UI package with 4 classes
@@ -266,7 +266,7 @@ ConsoleLogger.setLogLevel(config.logLevel);
 - All existing commands still work
 
 **Upgrade Steps:**
-1. Replace JAR with v1.2 build
+1. Replace JAR with v0.2.1 build
 2. Optional: Create `churn.properties` for custom settings
 3. Existing jobs continue to work
 4. New UI features automatically enabled

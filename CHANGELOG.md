@@ -1,5 +1,13 @@
 # Churn Mod Changelog
 
+## Version 0.2.1 (Documentation & metadata correction)
+
+### Notes
+- Corrected project and mod metadata version from 1.2.0/1.2 to 0.2.1 across configuration and documentation.
+- Renamed delivery summary to `DELIVERY_SUMMARY_v0.2.1.md` and updated documentation index.
+- No code functionality changes; this is a metadata/documentation release.
+
+
 ## Version 1.1 (Latest)
 
 ### Major Changes
@@ -106,7 +114,7 @@
 
 ## Roadmap
 
-### Planned for v1.2
+### Planned for 0.2.1
 - [ ] Persistent settings storage (database or config file)
 - [ ] Biome and noise configuration extraction
 - [ ] Block type enumeration with counts

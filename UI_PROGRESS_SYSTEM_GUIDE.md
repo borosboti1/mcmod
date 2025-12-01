@@ -1,8 +1,8 @@
-# **Churn Mod v1.2 - Real-Time Progress Display System**
+# **Churn Mod v0.2.1 - Real-Time Progress Display System**
 
 ## **Overview**
 
-Churn Mod v1.2 introduces a professional real-time progress display system with enhanced user feedback, structured console logging, and polished command responses. This document describes the new UI/UX features and their implementation.
+Churn Mod v0.2.1 introduces a professional real-time progress display system with enhanced user feedback, structured console logging, and polished command responses. This document describes the new UI/UX features and their implementation.
 
 ## **1. Core Features**
 
@@ -80,7 +80,7 @@ All commands now return polished, multi-line formatted responses with helpful in
 Server admins see organized, categorized console output with timestamping:
 
 ```
-[14:23:45] [Churn Worker/INFO] [Churn/]: [INIT] Churn Mod v1.2 initialized
+[14:23:45] [Churn Worker/INFO] [Churn/]: [INIT] Churn Mod v0.2.1 initialized
 [14:23:46] [Server thread/INFO] [Churn/]: [JOB] Player 'borosboti' started extraction: overworld (radius: 32)
 [14:24:12] [Churn Worker/INFO] [Churn/]: [PROGRESS] 256/1024 chunks (25%) - 4.2 chunks/sec
 [14:24:38] [Churn Worker/INFO] [Churn/]: [PROGRESS] 512/1024 chunks (50%) - 4.5 chunks/sec

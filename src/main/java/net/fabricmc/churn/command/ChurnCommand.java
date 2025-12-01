@@ -36,6 +36,10 @@ public class ChurnCommand {
                 .then(literal("settings")
                     .executes(ChurnCommand::executeSettings))
                 
+                // /churn list-dimensions - show available dimensions
+                .then(literal("list-dimensions")
+                    .executes(ChurnCommand::executeListDimensions))
+                
                 // /churn reset - reset settings to defaults
                 .then(literal("reset")
                     .executes(ChurnCommand::executeReset))
@@ -173,6 +177,36 @@ public class ChurnCommand {
         src.sendMessage(Text.literal("§7Fast Mode: §f" + (settings.isFastMode() ? "ON" : "OFF")));
         src.sendMessage(Text.literal(""));
         src.sendMessage(Text.literal("§7Use /churn <command> <value> to change settings"));
+        return 1;
+    }
+
+    private static int executeListDimensions(CommandContext<ServerCommandSource> ctx) {
+        ServerCommandSource src = ctx.getSource();
+        try {
+            // Get the world directory - works for both server world and saves folder
+            java.nio.file.Path serverDir = java.nio.file.Paths.get(".").toAbsolutePath();
+            java.nio.file.Path worldDir = serverDir.resolve("world");
+            if (!java.nio.file.Files.exists(worldDir)) {
+                worldDir = serverDir; // Fallback to server directory if world folder doesn't exist
+            }
+            
+            java.util.List<String> dimensions = WorldNavigator.getAvailableDimensions(worldDir);
+            
+            src.sendMessage(Text.literal("§6=== Available Dimensions ==="));
+            if (dimensions.isEmpty()) {
+                src.sendMessage(Text.literal("§c No dimensions found. Using defaults: overworld, nether, end"));
+                src.sendMessage(Text.literal("§7Set world with: §f/churn world <name>"));
+            } else {
+                src.sendMessage(Text.literal("§aFound " + dimensions.size() + " dimensions:"));
+                String dimList = String.join("§7, §f", dimensions);
+                src.sendMessage(Text.literal("§f  " + dimList));
+                src.sendMessage(Text.literal(""));
+                src.sendMessage(Text.literal("§7Set world with: §f/churn world <name>"));
+            }
+        } catch (Exception e) {
+            ConsoleLogger.error("[CMD] Failed to list dimensions: " + e.getMessage());
+            src.sendMessage(Text.literal("§cFailed to list dimensions. Using defaults: overworld, nether, end"));
+        }
         return 1;
     }
 

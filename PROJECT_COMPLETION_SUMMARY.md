@@ -1,4 +1,4 @@
-# 🎉 **Churn Mod v1.2 - Project Complete!**
+# 🎉 **Churn Mod v0.2.1 - Project Complete!**
 
 ## **Real-Time Progress Display System - Final Delivery**
 
@@ -7,7 +7,7 @@
 ## **📈 Project Stats**
 
 ```
-Version:          1.2
+Version:          0.2.1
 Status:           ✅ COMPLETE & DEPLOYED
 Build:            ✅ SUCCESS (36 seconds)
 Errors:           ✅ 0 compilation errors
@@ -62,7 +62,7 @@ Complete Command:
 
 ### **3️⃣ Structured Console Logging**
 ```
-[14:23:46] [Churn Worker/INFO] [Churn/]: [INIT] Churn Mod v1.2 initialized
+[14:23:46] [Churn Worker/INFO] [Churn/]: [INIT] Churn Mod v0.2.1 initialized
 [14:23:47] [Server thread/INFO] [Churn/]: [JOB] Player 'borosboti' started extraction: overworld (radius: 32)
 [14:24:12] [Churn Worker/INFO] [Churn/]: [PROGRESS] 256/1024 chunks (25%) - 4.2 chunks/sec
 [14:24:38] [Churn Worker/INFO] [Churn/]: [PROGRESS] 512/1024 chunks (50%) - 4.5 chunks/sec
@@ -119,7 +119,7 @@ src/main/java/net/fabricmc/churn/
 ```
 ├── UI_PROGRESS_SYSTEM_GUIDE.md      (500 lines) - Feature guide
 ├── IMPLEMENTATION_GUIDE.md          (400 lines) - Technical guide
-└── DELIVERY_SUMMARY_v1.2.md         (466 lines) - This summary
+└── DELIVERY_SUMMARY_v0.2.1.md         (466 lines) - This summary
 ```
 
 ### **Build Artifacts**
@@ -344,7 +344,7 @@ Support Documentation: Comprehensive
 ### **For Server Admins**
 ```
 1. Backup current mod JAR
-2. Download/build Churn v1.2
+2. Download/build Churn v0.2.1
 3. Replace JAR file
 4. Restart server
 5. Configuration auto-creates on first run
@@ -383,7 +383,7 @@ With the foundation in place, easy to add:
 |----------|---------|
 | UI_PROGRESS_SYSTEM_GUIDE.md | Feature reference |
 | IMPLEMENTATION_GUIDE.md | Technical details |
-| DELIVERY_SUMMARY_v1.2.md | Overview |
+| DELIVERY_SUMMARY_v0.2.1.md | Overview |
 | Code comments | Inline documentation |
 | ConsoleLogger methods | Logging examples |
 | CommandResponse methods | Response examples |
@@ -392,7 +392,7 @@ With the foundation in place, easy to add:
 
 ## **🏆 Project Summary**
 
-**Churn Mod v1.2** successfully delivers a professional, production-ready real-time progress display system with:
+**Churn Mod v0.2.1** successfully delivers a professional, production-ready real-time progress display system with:
 
 - ✅ **Real-time hotbar updates** - Players see progress instantly
 - ✅ **Professional responses** - Clear, helpful command feedback
@@ -409,7 +409,7 @@ With the foundation in place, easy to add:
 ```
 ╔═══════════════════════════════════════════════════════════╗
 ║                                                           ║
-║  Churn Mod v1.2 is COMPLETE and PRODUCTION READY         ║
+║  Churn Mod v0.2.1 is COMPLETE and PRODUCTION READY         ║
 ║                                                           ║
 ║  ✅ All features implemented                             ║
 ║  ✅ Build successful (0 errors)                          ║
@@ -428,7 +428,7 @@ With the foundation in place, easy to add:
 
 ---
 
-**Version:** 1.2  
+**Version:** 0.2.1  
 **Status:** ✅ COMPLETE  
 **Build:** ✅ SUCCESS  
 **Deployment:** ✅ READY  

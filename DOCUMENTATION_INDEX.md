@@ -1,14 +1,25 @@
-# **Churn Mod v1.2 - Complete Documentation Index**
+4. DELIVERY_SUMMARY_v0.2.1.md (10 min)
+1. DELIVERY_SUMMARY_v0.2.1.md (10 min)
+| DELIVERY_SUMMARY_v0.2.1.md | 470 | 10 min | Project summary |
+→ See DELIVERY_SUMMARY_v0.2.1.md for context
+### **From DELIVERY_SUMMARY_v0.2.1.md**
+## **✨ New in v0.2.1**
+### **Before v0.2.1**
+### **After v0.2.1**
+- Build or download Churn v0.2.1 JAR
+- | What was built for v0.2.1? | PROJECT_COMPLETION_SUMMARY.md |
+→ Skim: DELIVERY_SUMMARY_v0.2.1.md
+# **Churn Mod v0.2.1 - Complete Documentation Index**
 
 ## **📚 Documentation Overview**
 
-This is your complete reference guide for the Churn Mod v1.2 real-time progress display system.
+This is your complete reference guide for the Churn Mod v0.2.1 real-time progress display system.
 
 ---
 
 ## **🚀 Quick Start**
 
-**New to v1.2?** Start here:
+**New to v0.2.1?** Start here:
 
 1. **PROJECT_COMPLETION_SUMMARY.md** (this file)
    - Visual overview of what was built
@@ -103,7 +114,7 @@ This is your complete reference guide for the Churn Mod v1.2 real-time progress 
 
 ### **Project Management**
 
-#### **DELIVERY_SUMMARY_v1.2.md**
+#### **DELIVERY_SUMMARY_v0.2.1.md**
 - 🎯 **Purpose:** Complete project summary
 - 📖 **Length:** ~470 lines
 - ⏱️ **Read Time:** 10 minutes
@@ -142,10 +153,10 @@ Churn/
 ├── CHANGELOG.md                       (Version history)
 ├── REFACTORING_SUMMARY.md             (v1.0→v1.1 changes)
 │
-├── UI_PROGRESS_SYSTEM_GUIDE.md        ← v1.2 Features (START HERE)
-├── IMPLEMENTATION_GUIDE.md            ← v1.2 Technical (For devs)
-├── DELIVERY_SUMMARY_v1.2.md           ← v1.2 Summary (Complete)
-└── PROJECT_COMPLETION_SUMMARY.md      ← v1.2 Overview (Quick)
+├── UI_PROGRESS_SYSTEM_GUIDE.md        ← v0.2.1 Features (START HERE)
+├── IMPLEMENTATION_GUIDE.md            ← v0.2.1 Technical (For devs)
+├── DELIVERY_SUMMARY_v0.2.1.md         ← v0.2.1 Summary (Complete)
+└── PROJECT_COMPLETION_SUMMARY.md      ← v0.2.1 Overview (Quick)
 
 src/main/java/net/fabricmc/churn/ui/
 ├── ProgressDisplayManager.java        (Hotbar updates)
@@ -194,13 +205,13 @@ src/main/java/net/fabricmc/churn/ui/
 3. Source code + comments (30 min)
    └─ Detailed implementation
    
-4. DELIVERY_SUMMARY_v1.2.md (10 min)
+4. DELIVERY_SUMMARY_v0.2.1.md (10 min)
    └─ Context and details
 ```
 
 ### **🔍 Code Reviewer**
 ```
-1. DELIVERY_SUMMARY_v1.2.md (10 min)
+1. DELIVERY_SUMMARY_v0.2.1.md (10 min)
    └─ Full summary
    
 2. IMPLEMENTATION_GUIDE.md (20 min)
@@ -273,7 +284,7 @@ logging.color=true               # Colored output
 | PROJECT_COMPLETION_SUMMARY.md | 450 | 5 min | Visual overview |
 | UI_PROGRESS_SYSTEM_GUIDE.md | 500 | 15 min | Feature guide |
 | IMPLEMENTATION_GUIDE.md | 400 | 20 min | Technical details |
-| DELIVERY_SUMMARY_v1.2.md | 470 | 10 min | Project summary |
+| DELIVERY_SUMMARY_v0.2.1.md | 470 | 10 min | Project summary |
 | **Total** | **1,820** | **50 min** | **Complete docs** |
 
 ---
@@ -289,17 +300,17 @@ logging.color=true               # Colored output
 
 ### **From IMPLEMENTATION_GUIDE.md**
 → See source code files for actual implementation
-→ See DELIVERY_SUMMARY_v1.2.md for context
+→ See DELIVERY_SUMMARY_v0.2.1.md for context
 
-### **From DELIVERY_SUMMARY_v1.2.md**
+### **From DELIVERY_SUMMARY_v0.2.1.md**
 → See UI_PROGRESS_SYSTEM_GUIDE.md for features
 → See IMPLEMENTATION_GUIDE.md for technical
 
 ---
 
-## **✨ New in v1.2**
+## **✨ New in v0.2.1**
 
-### **Before v1.2**
+### **Before v0.2.1**
 ```
 ❌ Progress only in console output
 ❌ Generic command responses
@@ -308,7 +319,7 @@ logging.color=true               # Colored output
 ❌ Manual status checking
 ```
 
-### **After v1.2**
+### **After v0.2.1**
 ```
 ✅ Real-time hotbar progress
 ✅ Professional formatted responses
@@ -323,7 +334,7 @@ logging.color=true               # Colored output
 ## **🚀 Getting Started (3 Steps)**
 
 ### **Step 1: Install**
-- Build or download Churn v1.2 JAR
+- Build or download Churn v0.2.1 JAR
 - Replace existing JAR
 - Restart server
 
@@ -349,7 +360,7 @@ Enjoy real-time feedback!
 | How do I use the mod? | UI_PROGRESS_SYSTEM_GUIDE.md |
 | What are the commands? | COMMAND_REFERENCE.md |
 | How does it work technically? | IMPLEMENTATION_GUIDE.md |
-| What was built for v1.2? | PROJECT_COMPLETION_SUMMARY.md |
+| What was built for v0.2.1? | PROJECT_COMPLETION_SUMMARY.md |
 | How do I configure it? | IMPLEMENTATION_GUIDE.md → Configuration section |
 | What's the console output format? | UI_PROGRESS_SYSTEM_GUIDE.md → Console Logging |
 | How do I extend it? | IMPLEMENTATION_GUIDE.md → For Developers |
@@ -372,7 +383,7 @@ Enjoy real-time feedback!
 → Read: PROJECT_COMPLETION_SUMMARY.md
 → Read: UI_PROGRESS_SYSTEM_GUIDE.md
 → Read: IMPLEMENTATION_GUIDE.md
-→ Skim: DELIVERY_SUMMARY_v1.2.md
+→ Skim: DELIVERY_SUMMARY_v0.2.1.md
 
 ### **Path 4: Developer Deep Dive (2+ hours)**
 → Read: All documentation
@@ -385,7 +396,7 @@ Enjoy real-time feedback!
 ## **📝 Version Information**
 
 ```
-Churn Mod Version:    1.2
+Churn Mod Version:    0.2.1
 Release Date:         December 2025
 Status:               ✅ Production Ready
 Build Status:         ✅ SUCCESS (36s)

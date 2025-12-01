@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "id": "churn",
-  "version": "0.1.0-beta",
+  "version": "0.2.1",
   "name": "Churn Mod",
   "description": "Chunk reverse engineering mod",
   "authors": ["Te"],

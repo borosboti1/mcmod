@@ -316,7 +316,7 @@ BUILD SUCCESSFUL in 28s
 
 ## Future Enhancement Opportunities
 
-### v1.2 Planned
+### 0.2.1 Planned
 - Persistent settings (config file storage)
 - Biome extraction
 - Block type counting

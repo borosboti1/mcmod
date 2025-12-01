@@ -2,28 +2,58 @@ package net.fabricmc.churn.generator;
 
 import java.nio.file.*;
 import java.util.*;
+import net.fabricmc.churn.ui.ConsoleLogger;
 
 /**
  * Navigates Minecraft world structure: locates world directories,
  * finds region files, validates world integrity.
+ * 
+ * Supports dimension name mapping:
+ * - overworld/world → world/
+ * - nether/the_nether → world/DIM-1/
+ * - end/the_end → world/DIM1/
  */
 public class WorldNavigator {
     private final Path worldRoot;
     private final Path regionDir;
+    
+    // Map user-friendly dimension names to actual directory paths
+    private static final Map<String, String> DIMENSION_MAP = new HashMap<>();
+    static {
+        DIMENSION_MAP.put("overworld", "world");
+        DIMENSION_MAP.put("world", "world");
+        DIMENSION_MAP.put("default", "world");
+        DIMENSION_MAP.put("nether", "world/DIM-1");
+        DIMENSION_MAP.put("the_nether", "world/DIM-1");
+        DIMENSION_MAP.put("end", "world/DIM1");
+        DIMENSION_MAP.put("the_end", "world/DIM1");
+    }
 
     public WorldNavigator(String worldId, Path baseDir) throws Exception {
-        // worldId format: "minecraft:overworld" or just "world_name"
+        // Clean up dimension ID (remove minecraft: prefix if present)
         String cleanId = worldId.contains(":") ? worldId.split(":")[1] : worldId;
         
-        // Try common world directory paths
-        this.worldRoot = findWorldDirectory(baseDir, cleanId);
+        // Map dimension name to actual directory path
+        String mappedPath = DIMENSION_MAP.getOrDefault(cleanId.toLowerCase(), cleanId);
+        
+        // Try to find the world directory
+        this.worldRoot = findWorldDirectory(baseDir, mappedPath, cleanId);
         if (worldRoot == null) {
-            throw new Exception("World '" + cleanId + "' not found in " + baseDir);
+            // Provide helpful error message
+            List<String> available = getAvailableDimensions(baseDir);
+            String searchedPaths = String.join(", ", getSearchPaths(baseDir, mappedPath));
+            throw new Exception(
+                "Dimension '" + cleanId + "' not found.\n" +
+                "Searched: " + searchedPaths + "\n" +
+                "Available dimensions: " + String.join(", ", available)
+            );
         }
 
+        ConsoleLogger.init("[NAV] World located: " + worldRoot.toAbsolutePath().toString());
+
         // Region directory (depends on dimension)
-        String dimPath = cleanId.contains("nether") ? "DIM-1/data" : 
-                         cleanId.contains("end") ? "DIM1/data" : "region";
+        String dimPath = cleanId.toLowerCase().contains("nether") ? "DIM-1/region" : 
+                         cleanId.toLowerCase().contains("end") ? "DIM1/region" : "region";
         this.regionDir = worldRoot.resolve(dimPath);
         
         if (!Files.exists(regionDir)) {
@@ -32,14 +62,36 @@ public class WorldNavigator {
     }
 
     /**
-     * Locate world directory by name (search in saves/ or worlds/).
+     * Map user-friendly dimension names to actual directory paths
      */
-    private Path findWorldDirectory(Path baseDir, String worldName) throws Exception {
-        // Common patterns: <baseDir>/saves/<worldName>, <baseDir>/worlds/<worldName>, <baseDir>/<worldName>
+    public static String mapDimensionName(String userFriendlyName) {
+        return DIMENSION_MAP.getOrDefault(userFriendlyName.toLowerCase(), userFriendlyName);
+    }
+
+    /**
+     * Get list of possible search paths for debugging
+     */
+    private static List<String> getSearchPaths(Path baseDir, String mappedPath) {
+        List<String> paths = new ArrayList<>();
+        paths.add(baseDir.resolve(mappedPath).toString());
+        paths.add(baseDir.resolve("saves").resolve(mappedPath).toString());
+        paths.add(baseDir.resolve("worlds").resolve(mappedPath).toString());
+        return paths;
+    }
+
+    /**
+     * Locate world directory by name (search in multiple locations)
+     */
+    private Path findWorldDirectory(Path baseDir, String mappedPath, String originalName) throws Exception {
+        // Try all possible locations
         Path[] candidates = {
-            baseDir.resolve("saves").resolve(worldName),
-            baseDir.resolve("worlds").resolve(worldName),
-            baseDir.resolve(worldName)
+            baseDir.resolve(mappedPath),
+            baseDir.resolve("saves").resolve(mappedPath),
+            baseDir.resolve("worlds").resolve(mappedPath),
+            // Fallback: try original name in case of custom dimensions
+            baseDir.resolve(originalName),
+            baseDir.resolve("saves").resolve(originalName),
+            baseDir.resolve("worlds").resolve(originalName)
         };
 
         for (Path candidate : candidates) {
@@ -51,6 +103,58 @@ public class WorldNavigator {
             }
         }
         return null;
+    }
+
+    /**
+     * Discover all available dimensions in the world directory
+     */
+    public static List<String> getAvailableDimensions(Path baseDir) {
+        List<String> dimensions = new ArrayList<>();
+        
+        // Always add overworld if world/ exists
+        if (Files.exists(baseDir.resolve("world"))) {
+            dimensions.add("overworld");
+        }
+        
+        // Check for Nether
+        if (Files.exists(baseDir.resolve("world/DIM-1"))) {
+            dimensions.add("nether");
+        }
+        
+        // Check for End
+        if (Files.exists(baseDir.resolve("world/DIM1"))) {
+            dimensions.add("end");
+        }
+        
+        // Check for custom worlds in saves/
+        Path savesDir = baseDir.resolve("saves");
+        if (Files.exists(savesDir) && Files.isDirectory(savesDir)) {
+            try (DirectoryStream<Path> stream = Files.newDirectoryStream(savesDir)) {
+                for (Path path : stream) {
+                    if (Files.isDirectory(path) && Files.exists(path.resolve("level.dat"))) {
+                        dimensions.add(path.getFileName().toString());
+                    }
+                }
+            } catch (Exception e) {
+                // Silently ignore enumeration errors
+            }
+        }
+        
+        // Check for worlds in worlds/
+        Path worldsDir = baseDir.resolve("worlds");
+        if (Files.exists(worldsDir) && Files.isDirectory(worldsDir)) {
+            try (DirectoryStream<Path> stream = Files.newDirectoryStream(worldsDir)) {
+                for (Path path : stream) {
+                    if (Files.isDirectory(path) && Files.exists(path.resolve("level.dat"))) {
+                        dimensions.add(path.getFileName().toString());
+                    }
+                }
+            } catch (Exception e) {
+                // Silently ignore enumeration errors
+            }
+        }
+        
+        return dimensions.isEmpty() ? Arrays.asList("overworld") : dimensions;
     }
 
     /**
