@@ -17,6 +17,8 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Properties;
 import net.fabricmc.churn.generator.*;
+import net.fabricmc.churn.ui.CommandResponse;
+import net.fabricmc.churn.ui.ConsoleLogger;
 
 public class ChurnCommand {
 
@@ -296,12 +298,25 @@ public class ChurnCommand {
         String playerId = src.getPlayer() != null ? src.getPlayer().getUuidAsString() : "console";
         ChurnSettings settings = ChurnSettings.getSettings(playerId);
 
-        src.sendMessage(Text.literal("§6[Churn] §eStarting extraction with current settings:"));
-        src.sendMessage(Text.literal(settings.getSummary()));
-
         JobConfig cfg = settings.toJobConfig();
-        GeneratorManager.getInstance().startJob(cfg);
-        src.sendMessage(Text.literal("§6[Churn] §aExtraction started"));
+        
+        // Set player context for progress display
+        if (src.getPlayer() != null) {
+            GeneratorManager.getInstance().setJobPlayer(src.getPlayer(), playerId);
+        }
+        
+        try {
+            GeneratorManager.getInstance().startJob(cfg);
+            
+            // Send professional response
+            int totalChunks = (int) ((2L * ((int)Math.ceil(cfg.radius / 16.0) + 1)) * 
+                                      (2L * ((int)Math.ceil(cfg.radius / 16.0) + 1)) - 1);
+            src.sendMessage(CommandResponse.extractionStarted(cfg.worldId, cfg.radius, totalChunks));
+        } catch (Exception e) {
+            src.sendMessage(CommandResponse.error("Extraction Failed", e.getMessage(), 
+                "Check settings with /churn settings"));
+            ConsoleLogger.error("Failed to start extraction: %s", e);
+        }
         return 1;
     }
 
@@ -369,11 +384,25 @@ public class ChurnCommand {
     private static int executeStatus(CommandContext<ServerCommandSource> ctx, String format) {
         ServerCommandSource src = ctx.getSource();
         try {
-            boolean json = format.equals("json");
-            String s = json ? GeneratorManager.getInstance().getStatusJson() : GeneratorManager.getInstance().getStatus();
-            src.sendMessage(Text.literal("§6[Churn] " + (json ? "§7(JSON) §r" : "") + s));
+            GeneratorManager manager = GeneratorManager.getInstance();
+            long total = manager.getChunksTotal();
+            long completed = manager.getChunksCompleted();
+            
+            if (total == 0) {
+                src.sendMessage(CommandResponse.errorNoJobRunning());
+                return 1;
+            }
+            
+            int percent = (int) ((completed * 100) / total);
+            long elapsed = System.currentTimeMillis() - manager.getStartTime();
+            double speed = manager.getChunksPerSecond();
+            long remaining = speed > 0 ? (long)((total - completed) / speed * 1000) : 0;
+            
+            src.sendMessage(CommandResponse.status(percent, (int)completed, (int)total, 
+                elapsed, speed, remaining));
         } catch (Exception e) {
-            src.sendMessage(Text.literal("§6[Churn] §cError querying status: " + e.getMessage()));
+            src.sendMessage(CommandResponse.error("Status Error", e.getMessage(), 
+                "Try /churn start to begin a new job"));
         }
         return 1;
     }
@@ -382,9 +411,11 @@ public class ChurnCommand {
         ServerCommandSource src = ctx.getSource();
         try {
             GeneratorManager.getInstance().pauseCurrentJob();
-            src.sendMessage(Text.literal("§6[Churn] §eExtraction paused"));
+            src.sendMessage(CommandResponse.extractionPaused("churn_last_job.meta"));
         } catch (Exception e) {
-            src.sendMessage(Text.literal("§6[Churn] §cError pausing: " + e.getMessage()));
+            src.sendMessage(CommandResponse.error("Pause Failed", e.getMessage(), 
+                "Try /churn cancel to stop"));
+            ConsoleLogger.error("Failed to pause extraction: %s", e);
         }
         return 1;
     }
@@ -411,10 +442,13 @@ public class ChurnCommand {
     private static int executeCancel(CommandContext<ServerCommandSource> ctx) {
         ServerCommandSource src = ctx.getSource();
         try {
+            long completed = GeneratorManager.getInstance().getChunksCompleted();
             GeneratorManager.getInstance().cancelCurrentJob();
-            src.sendMessage(Text.literal("§6[Churn] §cExtraction cancelled"));
+            src.sendMessage(CommandResponse.extractionCancelled((int)completed, "churn_output/partial"));
         } catch (Exception e) {
-            src.sendMessage(Text.literal("§6[Churn] §cError cancelling: " + e.getMessage()));
+            src.sendMessage(CommandResponse.error("Cancel Failed", e.getMessage(), 
+                "No job may be running"));
+            ConsoleLogger.error("Failed to cancel extraction: %s", e);
         }
         return 1;
     }

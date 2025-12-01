@@ -2,6 +2,9 @@ package net.fabricmc.churn.generator;
 
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicLong;
+import net.fabricmc.churn.ui.ProgressDisplayManager;
+import net.fabricmc.churn.ui.ConsoleLogger;
+import net.minecraft.server.network.ServerPlayerEntity;
 
 public class GeneratorManager {
     private static final GeneratorManager INSTANCE = new GeneratorManager();
@@ -12,6 +15,10 @@ public class GeneratorManager {
 
     private volatile JobConfig currentJob;
     private volatile boolean cancelRequested = false;
+    
+    // Player context for progress display
+    private ServerPlayerEntity jobPlayer = null;
+    private String jobPlayerId = null;
 
     // Core engine pieces
     private ChurnWorkQueue workQueue;
@@ -67,6 +74,9 @@ public class GeneratorManager {
         long total = (2L * chunkRadius + 1L) * (2L * chunkRadius + 1L);
         chunksTotal.set(total);
         chunksCompleted.set(0);
+
+        // Log job start
+        ConsoleLogger.jobStart(jobPlayerId != null ? jobPlayerId : "console", cfg.worldId, cfg.radius, (int)total);
 
         // Create queue and enqueue chunk tasks (per-chunk)
         workQueue = new ChurnWorkQueue();
@@ -182,6 +192,35 @@ public class GeneratorManager {
 
         System.out.println("[Churn] Job started: " + cfg + " totalChunks=" + total);
     }
+    
+    /**
+     * Set player context for progress display
+     */
+    public void setJobPlayer(ServerPlayerEntity player, String playerId) {
+        this.jobPlayer = player;
+        this.jobPlayerId = playerId;
+    }
+    
+    /**
+     * Get chunks total for status display
+     */
+    public long getChunksTotal() {
+        return chunksTotal.get();
+    }
+    
+    /**
+     * Get chunks completed for status display
+     */
+    public long getChunksCompleted() {
+        return chunksCompleted.get();
+    }
+    
+    /**
+     * Get start time for elapsed calculation
+     */
+    public long getStartTime() {
+        return startTimeMillis;
+    }
 
     public String getStatus() {
         if (currentJob == null) return "idle";
@@ -235,6 +274,11 @@ public class GeneratorManager {
 
     public synchronized void cancelCurrentJob() {
         if (currentJob == null) return;
+        
+        // Log cancellation
+        long completed = chunksCompleted.get();
+        ConsoleLogger.jobCancelled(jobPlayerId != null ? jobPlayerId : "console", (int)completed);
+        
         cancelRequested = true;
         if (workerPool != null) {
             workerPool.shutdownNow();
@@ -243,7 +287,15 @@ public class GeneratorManager {
             logger.requestStop();
         }
         System.out.println("[Churn] cancel requested");
+        
+        // Clear progress display
+        if (jobPlayer != null && jobPlayer.isAlive()) {
+            ProgressDisplayManager.getInstance().clearProgress(jobPlayer);
+        }
+        
         currentJob = null;
+        jobPlayer = null;
+        jobPlayerId = null;
     }
 
     public synchronized void pauseWorkers() {
@@ -282,6 +334,10 @@ public class GeneratorManager {
                 p.store(os, "Churn job checkpoint");
             }
             System.out.println("[Churn] job state saved to churn_last_job.meta");
+            
+            // Log checkpoint
+            ConsoleLogger.checkpointCreated("churn_last_job.meta", (int)chunksCompleted.get());
+            
             // persist remaining queue to a file in the checkpoint directory
             try {
                 java.nio.file.Path cpDir = java.nio.file.Paths.get(currentJob.checkpointPath == null ? "churn_checkpoints" : currentJob.checkpointPath);
@@ -295,10 +351,20 @@ public class GeneratorManager {
                 System.out.println("[Churn] persisted applier queue (" + acount + " entries) to " + aFile);
             } catch (Exception e) {
                 System.err.println("[Churn] failed to persist queue file: " + e);
+                ConsoleLogger.warn("Failed to persist queue file: %s", e.getMessage());
             }
         } catch (Exception e) {
             System.err.println("[Churn] failed to persist job state: " + e);
+            ConsoleLogger.error("Failed to persist job state: %s", e);
         }
+        
+        // Clear progress display
+        if (jobPlayer != null && jobPlayer.isAlive()) {
+            ProgressDisplayManager.getInstance().clearProgress(jobPlayer);
+        }
+        
+        jobPlayer = null;
+        jobPlayerId = null;
     }
 
     public synchronized void resumeJob(String path) {
@@ -342,7 +408,9 @@ public class GeneratorManager {
         if (cfg.minTps > 0.0 && tps < cfg.minTps) {
             if (!isWorkersPaused()) {
                 pauseWorkers();
-                System.out.println("[Churn] throttling engaged: TPS=" + String.format("%.2f", tps) + " < minTps=" + cfg.minTps);
+                String msg = String.format("Throttling engaged: TPS=%.2f < minTps=%.1f", tps, cfg.minTps);
+                System.out.println("[Churn] " + msg);
+                ConsoleLogger.warnTPS(tps, cfg.minTps);
             }
             return;
         } else {
@@ -363,11 +431,45 @@ public class GeneratorManager {
                 lastEwmaUpdate = now;
             }
         }
+        
+        // Update progress display and logging
+        long completed = chunksCompleted.get();
+        long total = chunksTotal.get();
+        if (total > 0) {
+            int percent = (int) ((completed * 100) / total);
+            double speed = getChunksPerSecond();
+            
+            // Show hotbar progress
+            if (jobPlayer != null && jobPlayer.isAlive()) {
+                ProgressDisplayManager.getInstance().showProgress(jobPlayer, 
+                    currentJob.worldId, percent, (int)completed, (int)total);
+            }
+            
+            // Log progress every 10%
+            if (percent % 10 == 0 && percent > 0) {
+                ConsoleLogger.progress((int)completed, (int)total, speed);
+            }
+        }
+        
         if (chunksCompleted.get() >= chunksTotal.get() && applier.pending() == 0) {
             System.out.println("[Churn] job finished: applied all chunks");
+            
+            // Log completion
+            long elapsed = System.currentTimeMillis() - startTimeMillis;
+            ConsoleLogger.jobComplete(jobPlayerId != null ? jobPlayerId : "console", 
+                (int)chunksTotal.get(), elapsed);
+            
+            // Show completion message
+            if (jobPlayer != null && jobPlayer.isAlive()) {
+                ProgressDisplayManager.getInstance().completeProgress(jobPlayer, 
+                    currentJob.worldId, (int)chunksTotal.get(), elapsed);
+            }
+            
             if (logger != null) logger.requestStop();
             if (workerPool != null) workerPool.shutdownNow();
             currentJob = null;
+            jobPlayer = null;
+            jobPlayerId = null;
         }
     }
 
