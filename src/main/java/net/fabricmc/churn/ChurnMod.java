@@ -2,8 +2,12 @@ package net.fabricmc.churn;
 
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.churn.ui.ConsoleLogger;
 import net.fabricmc.churn.ui.ProgressConfig;
+import net.fabricmc.churn.ui.ProgressDisplayManager;
+import net.fabricmc.churn.generator.GeneratorManager;
 
 public class ChurnMod implements ModInitializer {
     public static final String MOD_ID = "churn";
@@ -29,6 +33,29 @@ public class ChurnMod implements ModInitializer {
                 ConsoleLogger.init("[CMD] Commands registered successfully");
             } catch (Exception e) {
                 ConsoleLogger.error("Failed to register commands: %s", e);
+            }
+        });
+
+        // Register server tick handler to apply main-thread applier work each tick
+        ServerTickEvents.START_SERVER_TICK.register(server -> {
+            try {
+                GeneratorManager.getInstance().tickApply();
+            } catch (Exception e) {
+                ConsoleLogger.error("Tick apply error: %s", e);
+            }
+        });
+
+        // Clean up on server stopping
+        ServerLifecycleEvents.SERVER_STOPPING.register(server -> {
+            try {
+                GeneratorManager.getInstance().cancelCurrentJob();
+            } catch (Exception e) {
+                // ignore
+            }
+            try {
+                ProgressDisplayManager.getInstance().shutdown();
+            } catch (Exception e) {
+                // ignore
             }
         });
         

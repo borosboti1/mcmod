@@ -402,6 +402,12 @@ public class ChurnCommand {
                 System.setProperty("churn.worldDir", worldDir.toString());
             }
 
+            // If command was issued by a player, set player context so progress is shown in their actionbar
+            String playerId = src.getPlayer() != null ? src.getPlayer().getUuidAsString() : "console";
+            if (src.getPlayer() != null) {
+                GeneratorManager.getInstance().setJobPlayer(src.getPlayer(), playerId);
+            }
+
             GeneratorManager.getInstance().startJob(cfg);
             src.sendMessage(Text.literal("§6[Churn] §aExtraction started: " + cfg.toString()));
         } catch (Exception e) {

@@ -83,25 +83,51 @@ public class WorldNavigator {
      * Locate world directory by name (search in multiple locations)
      */
     private Path findWorldDirectory(Path baseDir, String mappedPath, String originalName) throws Exception {
-        // Try all possible locations
-        Path[] candidates = {
-            baseDir.resolve(mappedPath),
-            baseDir.resolve("saves").resolve(mappedPath),
-            baseDir.resolve("worlds").resolve(mappedPath),
-            // Fallback: try original name in case of custom dimensions
-            baseDir.resolve(originalName),
-            baseDir.resolve("saves").resolve(originalName),
-            baseDir.resolve("worlds").resolve(originalName)
-        };
+        List<Path> candidates = new ArrayList<>();
 
+        // If baseDir already matches the mappedPath (e.g. baseDir is .../world and mappedPath == "world"),
+        // consider baseDir itself first to avoid duplicated paths like world/world.
+        try {
+            String baseName = baseDir.getFileName() != null ? baseDir.getFileName().toString() : "";
+            if (baseName.equalsIgnoreCase(mappedPath) || baseName.equalsIgnoreCase(originalName)) {
+                candidates.add(baseDir);
+            }
+        } catch (Exception e) {
+            // ignore
+        }
+
+        // Standard candidate locations
+        candidates.add(baseDir.resolve(mappedPath));
+        candidates.add(baseDir.resolve("saves").resolve(mappedPath));
+        candidates.add(baseDir.resolve("worlds").resolve(mappedPath));
+
+        // Fallbacks using original name (in case mapping wasn't accurate)
+        candidates.add(baseDir.resolve(originalName));
+        candidates.add(baseDir.resolve("saves").resolve(originalName));
+        candidates.add(baseDir.resolve("worlds").resolve(originalName));
+
+        // Also handle mappedPath starting with "world/" when baseDir already points to the world folder
+        if (mappedPath.startsWith("world/")) {
+            String sub = mappedPath.substring("world/".length());
+            candidates.add(baseDir.resolve(sub));
+            candidates.add(baseDir.resolve("saves").resolve(sub));
+            candidates.add(baseDir.resolve("worlds").resolve(sub));
+        }
+
+        // Iterate candidates and validate
         for (Path candidate : candidates) {
-            if (Files.exists(candidate) && Files.isDirectory(candidate)) {
-                // Verify it's a valid world (has level.dat)
-                if (Files.exists(candidate.resolve("level.dat"))) {
-                    return candidate;
+            try {
+                if (candidate != null && Files.exists(candidate) && Files.isDirectory(candidate)) {
+                    // Verify it's a valid world (has level.dat)
+                    if (Files.exists(candidate.resolve("level.dat"))) {
+                        return candidate;
+                    }
                 }
+            } catch (Exception e) {
+                // ignore and continue
             }
         }
+
         return null;
     }
 
