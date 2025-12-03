@@ -11,7 +11,7 @@ public class ChurnSettings {
 
     private String worldId = "overworld";
     private int radius = 10;
-    private int threads = 4;
+    private int threads = 2;
     private String outputPath = "churn_output";
     private String checkpointPath = "churn_checkpoints";
     private double minTps = 15.0;
@@ -104,7 +104,7 @@ public class ChurnSettings {
     public void reset() {
         this.worldId = "overworld";
         this.radius = 10;
-        this.threads = 4;
+        this.threads = 2;
         this.outputPath = "churn_output";
         this.checkpointPath = "churn_checkpoints";
         this.minTps = 15.0;
