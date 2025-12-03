@@ -29,6 +29,14 @@ public class ChunkData {
     }
 
     /**
+     * Serialize minimal chunk data to JSON bytes for caching.
+     */
+    public byte[] serialize() {
+        String json = "{\"x\":" + chunkX + ",\"z\":" + chunkZ + ",\"blocks\":" + blockCount + "}";
+        return json.getBytes(java.nio.charset.StandardCharsets.UTF_8);
+    }
+
+    /**
      * Simple entity representation.
      */
     public static class EntityData {

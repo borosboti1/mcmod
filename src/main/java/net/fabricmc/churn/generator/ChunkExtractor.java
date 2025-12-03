@@ -51,14 +51,42 @@ public class ChunkExtractor {
             
             try {
                 Path regionFile = navigator.getRegionFile(parts[0], parts[1]);
-                if (regionFile != null && Files.exists(regionFile)) {
-                    for (int[] coord : chunkCoords) {
+                if (regionFile == null) {
+                    // Not present for this dimension
+                    continue;
+                }
+
+                File rf = regionFile.toFile();
+                if (!rf.exists() || rf.length() == 0) {
+                    // Region file missing or empty; warn once and skip
+                    net.fabricmc.churn.ui.ConsoleLogger.warn("Region file not found or empty: %s", rf.getName());
+                    continue;
+                }
+
+                for (int[] coord : chunkCoords) {
+                    try {
+                        // Try to use cache first
+                        String key = coord[0] + "," + coord[1];
+                        byte[] cached = ChunkCache.get(key);
+                        if (cached != null) {
+                            ChunkData cd = parseNBT(coord[0], coord[1], cached);
+                            if (cd != null) chunks.add(cd);
+                            continue;
+                        }
+
                         ChunkData cd = extractChunkFromRegion(regionFile, coord[0], coord[1]);
-                        if (cd != null) chunks.add(cd);
+                        if (cd != null) {
+                            chunks.add(cd);
+                            // Cache serialized representation (simple JSON bytes used elsewhere)
+                            try { ChunkCache.put(key, cd.serialize()); } catch (Exception ex) { /* ignore cache failures */ }
+                        }
+                    } catch (Exception ex) {
+                        net.fabricmc.churn.ui.ConsoleLogger.errorChunkExtraction(coord[0], coord[1], ex.getMessage());
+                        // continue with other chunks
                     }
                 }
             } catch (Exception e) {
-                System.err.println("[Churn] failed to extract region " + regionKey + ": " + e.getMessage());
+                net.fabricmc.churn.ui.ConsoleLogger.warn("failed to extract region %s: %s", regionKey, e.getMessage());
             }
         }
 
@@ -68,25 +96,53 @@ public class ChunkExtractor {
     /**
      * Extract a single chunk from a region file using NBT parsing.
      */
-    private ChunkData extractChunkFromRegion(Path regionFile, int chunkX, int chunkZ) throws IOException {
-        int localX = Math.floorMod(chunkX, REGION_SIZE);
-        int localZ = Math.floorMod(chunkZ, REGION_SIZE);
-        int offset = (localX + localZ * REGION_SIZE) * 4096;
+    private ChunkData extractChunkFromRegion(Path regionFile, int chunkX, int chunkZ) {
+        try {
+            int localX = Math.floorMod(chunkX, REGION_SIZE);
+            int localZ = Math.floorMod(chunkZ, REGION_SIZE);
+            int offset = (localX + localZ * REGION_SIZE) * 4096;
 
-        byte[] header = new byte[4];
-        try (RandomAccessFile raf = new RandomAccessFile(regionFile.toFile(), "r")) {
-            raf.seek((long) offset);
-            raf.readFully(header);
-            
-            int dataLength = ((header[0] & 0xFF) << 24) | ((header[1] & 0xFF) << 16) | ((header[2] & 0xFF) << 8) | (header[3] & 0xFF);
-            if (dataLength == 0) return null; // empty chunk
-            
-            byte compression = (byte) raf.read();
-            byte[] compressedData = new byte[dataLength - 1];
-            raf.readFully(compressedData);
+            byte[] header = new byte[4];
+            try (RandomAccessFile raf = new RandomAccessFile(regionFile.toFile(), "r")) {
+                raf.seek((long) offset);
+                int read = raf.read(header);
+                if (read < 4) {
+                    // No header present for this chunk
+                    return null;
+                }
 
-            byte[] decompressed = decompress(compression, compressedData);
-            return parseNBT(chunkX, chunkZ, decompressed);
+                int dataLength = ((header[0] & 0xFF) << 24) | ((header[1] & 0xFF) << 16) | ((header[2] & 0xFF) << 8) | (header[3] & 0xFF);
+                if (dataLength <= 0) return null; // empty chunk or not present
+
+                int comp = raf.read();
+                if (comp == -1) return null;
+                byte compression = (byte) comp;
+                int payloadLen = dataLength - 1;
+                if (payloadLen <= 0) return null;
+
+                byte[] compressedData = new byte[payloadLen];
+                int got = raf.read(compressedData);
+                if (got < payloadLen) {
+                    // truncated data
+                    net.fabricmc.churn.ui.ConsoleLogger.warnCorruptedRegion(regionFile.getFileName().toString(), "truncated chunk data");
+                    return null;
+                }
+
+                byte[] decompressed;
+                try {
+                    decompressed = decompress(compression, compressedData);
+                } catch (IOException ioe) {
+                    // Unknown compression or decompression failure -> warn and skip
+                    net.fabricmc.churn.ui.ConsoleLogger.warnCorruptedRegion(regionFile.getFileName().toString(), ioe.getMessage());
+                    return null;
+                }
+
+                return parseNBT(chunkX, chunkZ, decompressed);
+            }
+        } catch (Exception e) {
+            // Graceful fallback: log a warning and return null so the job can continue
+            net.fabricmc.churn.ui.ConsoleLogger.warn("Exception reading chunk %d,%d from %s: %s", chunkX, chunkZ, regionFile.getFileName().toString(), e.getMessage());
+            return null;
         }
     }
 

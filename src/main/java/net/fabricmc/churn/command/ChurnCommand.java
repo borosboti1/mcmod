@@ -125,6 +125,37 @@ public class ChurnCommand {
                     .then(argument("path", StringArgumentType.string())
                         .executes(ChurnCommand::executeCleanCheckpoints))
                     .executes(ctx -> executeCleanCheckpoints(ctx, "churn_checkpoints")))
+                // /churnstatus - quick performance/status summary
+                .then(literal("churnstatus")
+                    .executes(ctx -> {
+                        ServerCommandSource src2 = ctx.getSource();
+                        try {
+                            String status = net.fabricmc.churn.generator.GeneratorManager.getInstance().getStatus();
+                            src2.sendMessage(Text.literal("§6[Churn] Status: §f" + status));
+                        } catch (Exception e) {
+                            src2.sendMessage(Text.literal("§6[Churn] §cCould not retrieve status: " + e.getMessage()));
+                        }
+                        return 1;
+                    }))
+                // /churntest - start a small test extraction (radius 50)
+                .then(literal("churntest")
+                    .executes(ctx -> {
+                        ServerCommandSource src2 = ctx.getSource();
+                        try {
+                            // start small job using current player settings
+                            String playerId = src2.getPlayer() != null ? src2.getPlayer().getUuidAsString() : "console";
+                            net.fabricmc.churn.generator.JobConfig cfg = new net.fabricmc.churn.generator.JobConfig();
+                            cfg.radius = 50;
+                            cfg.threads = 2;
+                            cfg.outputPath = "churn_output_test";
+                            if (src2.getPlayer() != null) net.fabricmc.churn.generator.GeneratorManager.getInstance().setJobPlayer(src2.getPlayer(), playerId);
+                            net.fabricmc.churn.generator.GeneratorManager.getInstance().startJob(cfg);
+                            src2.sendMessage(Text.literal("§6[Churn] §aTest extraction started (radius=50)"));
+                        } catch (Exception e) {
+                            src2.sendMessage(Text.literal("§6[Churn] §cFailed to start test: " + e.getMessage()));
+                        }
+                        return 1;
+                    }))
         );
     }
 

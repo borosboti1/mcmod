@@ -27,8 +27,9 @@ public class ProgressConfig {
     public boolean showChatUpdates = true;
     
     // Logging settings
-    public ConsoleLogger.LogLevel logLevel = ConsoleLogger.LogLevel.INFO;
+    public ConsoleLogger.LogLevel logLevel = ConsoleLogger.LogLevel.WARN;
     public boolean logColor = true;
+    public boolean verboseChunkLogging = false;
     
     public static ProgressConfig getInstance() {
         return INSTANCE;
@@ -74,6 +75,9 @@ public class ProgressConfig {
                     logLevel = ConsoleLogger.LogLevel.INFO;
                 }
             }
+            if (props.containsKey("logging.verbose-chunk")) {
+                verboseChunkLogging = Boolean.parseBoolean(props.getProperty("logging.verbose-chunk", "false"));
+            }
             if (props.containsKey("logging.color")) {
                 logColor = Boolean.parseBoolean(props.getProperty("logging.color", "true"));
             }
@@ -84,6 +88,7 @@ public class ProgressConfig {
             ConsoleLogger.init("Show actionbar: " + showInActionbar);
             ConsoleLogger.init("Show chat updates: " + showChatUpdates);
             ConsoleLogger.init("Log level: " + logLevel.toString());
+            ConsoleLogger.init("Verbose chunk logging: " + verboseChunkLogging);
             
         } catch (IOException e) {
             ConsoleLogger.warn("Failed to load config from %s: %s", filePath, e.getMessage());
@@ -129,8 +134,13 @@ public class ProgressConfig {
         barLength = 20;
         showInActionbar = true;
         showChatUpdates = true;
-        logLevel = ConsoleLogger.LogLevel.INFO;
+        logLevel = ConsoleLogger.LogLevel.WARN;
         logColor = true;
+        verboseChunkLogging = false;
         ConsoleLogger.init("ProgressConfig reset to defaults");
+    }
+
+    public boolean shouldLogChunkDetails() {
+        return verboseChunkLogging && logLevel == ConsoleLogger.LogLevel.DEBUG;
     }
 }

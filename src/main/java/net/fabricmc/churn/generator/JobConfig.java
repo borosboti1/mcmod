@@ -3,7 +3,7 @@ package net.fabricmc.churn.generator;
 public class JobConfig {
     public String worldId;
     public int radius = 512;
-    public int threads = 4;
+    public int threads = 2;
     public String outputPath;
     public boolean skipLighting = false;
     public boolean skipEntities = false;

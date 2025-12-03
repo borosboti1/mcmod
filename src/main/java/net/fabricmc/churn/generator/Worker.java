@@ -25,6 +25,7 @@ public class Worker implements Runnable {
     @Override
     public void run() {
         try {
+            int processedSinceSleep = 0;
             while (!Thread.currentThread().isInterrupted() && !manager.isCancelRequested()) {
                 // Respect global paused state (e.g., TPS-based throttling)
                 while (manager.isWorkersPaused() && !Thread.currentThread().isInterrupted() && !manager.isCancelRequested()) {
@@ -53,6 +54,16 @@ public class Worker implements Runnable {
 
                 // Update metrics
                 completedCounter.incrementAndGet();
+                processedSinceSleep++;
+                if (processedSinceSleep >= 10) {
+                    processedSinceSleep = 0;
+                    try {
+                        Thread.sleep(50);
+                    } catch (InterruptedException ie) {
+                        Thread.currentThread().interrupt();
+                        break;
+                    }
+                }
             }
         } catch (Exception ex) {
             System.err.println("[Churn] Worker error: " + ex);

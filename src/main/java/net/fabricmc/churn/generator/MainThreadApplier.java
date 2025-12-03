@@ -50,7 +50,10 @@ public class MainThreadApplier {
             }
 
             // In real code: find or create chunk in ServerWorld and set sections/biomes
-            System.out.println("[Churn][Applier] Applying chunk " + r.chunkX + "," + r.chunkZ + " bytes=" + (r.data == null ? 0 : r.data.length));
+            // Detailed per-chunk apply logging is optional to avoid console flooding
+            if (net.fabricmc.churn.ui.ProgressConfig.getInstance().shouldLogChunkDetails()) {
+                System.out.println("[Churn][Applier] Applying chunk " + r.chunkX + "," + r.chunkZ + " bytes=" + (r.data == null ? 0 : r.data.length));
+            }
             try {
                 if (RegionCheckpointManager.getInstance() != null) {
                     RegionCheckpointManager.getInstance().markChunkDone(r.chunkX, r.chunkZ);

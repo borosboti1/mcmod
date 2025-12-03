@@ -18,7 +18,7 @@ public class ConsoleLogger {
     private static final Logger LOGGER = LoggerFactory.getLogger("Churn");
     
     // Log level configuration
-    private static volatile LogLevel minLogLevel = LogLevel.INFO;
+    private static volatile LogLevel minLogLevel = LogLevel.WARN;
     
     public enum LogLevel {
         DEBUG(0), INFO(1), WARN(2), ERROR(3);
